@@ -39,3 +39,7 @@ Issues live in GitHub Issues for this repo; uses the `gh` CLI. See `docs/agents/
 ### Domain docs
 
 Single-context: `CONTEXT.md` (once it exists) + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Grilling
+
+When running a grilling/interview skill (e.g. grill-me) in this project, always ask via multiple-choice options rather than open-ended free-text questions.
