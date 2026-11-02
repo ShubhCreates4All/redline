@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redline — Document Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper: #F3EEE2;
+    --paper-deep: #EAE2D1;
+    --ink: #2A271F;
+    --ink-soft: #55503f;
+    --contour: #B9AF95;
+    --contour-strong: #8d836a;
+    --hazard: #B31B23;
+    --hazard-deep: #7f1219;
+    --moderate: #C97A3F;
+    --worth: #7c8451;
+    --body-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --hazard-tint-critical: rgba(179,27,35,0.16);
+    --hazard-tint-critical-strong: rgba(179,27,35,0.26);
+    --hazard-tint-moderate: rgba(179,27,35,0.09);
+    --hazard-tint-worth: rgba(179,27,35,0.045);
+    --rule: rgba(42,39,31,0.16);
+    --focus: #1c5c8a;
+    --serif-none: 0; /* no serif in this world */
+    --shadow-color: 42,39,31;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  html{
+    scrollbar-width: thin;
+    scrollbar-color: var(--contour-strong) var(--paper);
+  }
+  html::-webkit-scrollbar{ width: 10px; }
+  html::-webkit-scrollbar-track{ background: var(--paper); }
+  html::-webkit-scrollbar-thumb{ background-color: var(--contour-strong); border-radius: 5px; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Overpass", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--hazard); color: var(--paper); }
+
+  /* contour ground texture */
+  .contour-ground{
+    position: fixed; inset: 0; z-index: -1;
+    background-color: var(--paper);
+    background-image:
+      repeating-radial-gradient( circle at 12% 18%, transparent 0, transparent 42px, var(--contour) 43px, transparent 44px, transparent 96px ),
+      repeating-radial-gradient( circle at 82% 66%, transparent 0, transparent 56px, var(--contour) 57px, transparent 58px, transparent 120px );
+    opacity: .35;
+  }
+
+  a{ color: inherit; }
+  button{ font-family: inherit; }
+
+  :focus-visible{
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Trailhead briefing ---------- */
+  .briefing{
+    border-bottom: 1px solid var(--rule);
+    padding: 28px clamp(20px, 4vw, 56px) 22px;
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper) 100%);
+  }
+  .briefing__top{
+    display:flex; align-items:baseline; justify-content:space-between; gap: 24px; flex-wrap: wrap;
+  }
+  .brand{
+    font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em;
+    display:flex; align-items:center; gap:10px;
+    min-width: 0;
+  }
+  .brand__mark{ width:20px; height:20px; flex:none; }
+  .doc-meta{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: .78rem; color: var(--ink-soft); letter-spacing: .01em;
+    min-width: 0; overflow-wrap: break-word; word-break: break-word;
+  }
+  .briefing__label{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: .8rem; font-weight: 400; text-transform: uppercase; letter-spacing: .12em; color: var(--hazard-deep);
+    margin: 18px 0 8px;
+  }
+  .briefing__summary{
+    max-width: 74ch;
+    font-family: var(--body-font);
+    font-size: 1.12rem; line-height: 1.55; color: var(--ink);
+  }
+  .briefing__summary strong{ font-weight: 700; }
+
+  .briefing__tally{
+    display:flex; gap: 22px; margin-top: 18px; flex-wrap: wrap;
+  }
+  .tally-item{
+    display:flex; align-items:center; gap:8px;
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: .82rem; color: var(--ink-soft);
+  }
+  .tally-item b{ color: var(--ink); font-weight:600; }
+  .tally-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .tally-dot.critical{ background: var(--hazard); }
+  .tally-dot.moderate{ background: var(--moderate); }
+  .tally-dot.worth{ background: var(--worth); }
+
+  /* ---------- Layout ---------- */
+  .workspace{
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 340px;
+    align-items: start;
+  }
+  @media (max-width: 880px){
+    .workspace{ grid-template-columns: minmax(0,1fr); }
+  }
+
+  /* ---------- Document pane ---------- */
+  .document-pane{
+    padding: 8px clamp(20px, 4vw, 56px) 120px;
+    max-width: 74ch;
+    min-width: 0;
+    position: relative;
+  }
+  .document-pane h2{
+    font-size: 1.5rem; margin: 40px 0 4px; letter-spacing: -0.01em;
+  }
+  .doc-sub{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: .78rem; font-weight: 400; color: var(--ink-soft); margin: 0 0 28px; display:block;
+  }
+  .document-pane p{
+    font-family: var(--body-font);
+    font-size: 1.02rem; line-height: 1.75; margin: 0 0 22px; color: var(--ink);
+  }
+  .clause-num{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size: .82rem; color: var(--contour-strong); margin-right: 2px;
+  }
+
+  .zone{
+    padding: 0 .08em;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background-color .18s ease;
+  }
+  .zone.critical{ background: var(--hazard-tint-critical); }
+  .zone.critical:hover, .zone.critical.active{ background: var(--hazard-tint-critical-strong); }
+  .zone.moderate{ background: var(--hazard-tint-moderate); }
+  .zone.moderate:hover, .zone.moderate.active{ background: rgba(201,122,63,0.22); }
+  .zone.worth{ background: var(--hazard-tint-worth); }
+  .zone.worth:hover, .zone.worth.active{ background: rgba(154,163,107,0.22); }
+
+  /* inline field-note expansion */
+  .field-note{
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .38s cubic-bezier(.16,1,.3,1);
+    margin: -6px 0 22px;
+  }
+  .field-note.open{ grid-template-rows: 1fr; }
+  .field-note__inner{ overflow: hidden; }
+  .field-note__card{
+    margin-top: 10px;
+    background: var(--paper-deep);
+    border-radius: 4px;
+    padding: 18px 20px 20px;
+    box-shadow: 0 1px 0 rgba(var(--shadow-color),.05);
+  }
+  .field-note__row{ display:flex; gap: 10px; align-items:flex-start; margin-bottom: 12px; }
+  .field-note__row:last-child{ margin-bottom:0; }
+  .field-note__icon{ flex:none; width:16px; height:16px; margin-top:3px; color: var(--hazard); }
+  .field-note__label{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; color: var(--ink-soft);
+    display:block; margin-bottom:4px;
+  }
+  .field-note__text{ font-family: var(--body-font); font-size: .96rem; line-height:1.6; }
+  .field-note__quote{
+    font-style: normal;
+    border-left: none;
+    background: rgba(179,27,35,0.07);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+  .jurisdiction-note{
+    font-family: var(--body-font);
+    font-size: .86rem; color: var(--ink-soft); margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed var(--contour);
+  }
+
+  /* ---------- Legend rail ---------- */
+  .rail{
+    position: sticky; top: 0;
+    align-self: start;
+    padding: 28px 22px 40px;
+    border-left: 1px solid var(--rule);
+    max-height: 100vh;
+    overflow-y: auto;
+    min-width: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--contour-strong) transparent;
+  }
+  .rail::-webkit-scrollbar{ width: 8px; }
+  .rail::-webkit-scrollbar-track{ background: transparent; }
+  .rail::-webkit-scrollbar-thumb{ background-color: var(--contour-strong); border-radius: 4px; }
+  @media (max-width: 880px){
+    .rail{ position: static; border-left:none; border-top:1px solid var(--rule); max-height:none; }
+  }
+  .rail h3{
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--ink-soft); margin: 0 0 14px; font-weight: 700;
+  }
+  .legend{
+    list-style:none; margin:0 0 28px; padding:0;
+    border: 1px solid var(--rule); border-radius: 4px; overflow:hidden;
+  }
+  .legend li{
+    display:flex; align-items:center; gap:10px;
+    padding: 9px 12px;
+    font-family: var(--body-font);
+    font-size: .82rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .legend li:last-child{ border-bottom:none; }
+  .legend__swatch{ width:14px; height:14px; flex:none; }
+
+  .rail-list{ list-style:none; margin:0; padding:0; }
+  .rail-item{
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .rail-item__btn{
+    width:100%; text-align:left;
+    display:flex; align-items:flex-start; gap:10px;
+    background:none; border: 1px solid transparent; border-radius:4px;
+    padding: 10px 10px 10px 14px;
+    cursor:pointer;
+  }
+  .rail-item__btn:hover{ background: var(--paper-deep); }
+  .rail-item[data-active="true"] .rail-item__btn{
+    background: var(--paper-deep);
+    border-color: var(--rule);
+  }
+  .rail-marker{
+    position:absolute; left:-15px; top:14px;
+    width:0; height:0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 6px solid var(--hazard);
+    opacity:0; transition: opacity .15s ease, top .25s cubic-bezier(.16,1,.3,1);
+  }
+  .rail-item[data-active="true"] .rail-marker{ opacity:1; }
+  .rail-item__icon{ flex:none; width:16px; height:16px; margin-top:2px; }
+  .rail-item__icon.critical{ color: var(--hazard); }
+  .rail-item__icon.moderate{ color:var(--moderate); }
+  .rail-item__icon.worth{ color:var(--worth); }
+  .rail-item__sev{
+    display:block;
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; color: var(--ink-soft);
+    margin-bottom:2px;
+  }
+  .rail-item__label{ font-family: var(--body-font); font-size:.86rem; line-height:1.35; }
+
+  .youarehere{
+    font-family:"JetBrains Mono", ui-monospace, monospace;
+    font-size:.8rem; color: var(--ink-soft);
+    margin: -4px 0 18px;
+    padding: 6px 10px;
+    border: 1px dashed var(--contour-strong);
+    border-radius: 3px;
+  }
+  .youarehere b{ color: var(--hazard-deep); }
+
+  footer{
+    padding: 40px clamp(20px,4vw,56px) 60px;
+    font-size:.8rem; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    grid-column: 1 / -1;
+  }
+</style>
+</head>
+<body>
+<div class="contour-ground" aria-hidden="true"></div>
+
+<header class="briefing">
+  <div class="briefing__top">
+    <div class="brand">
+      <svg class="brand__mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 L21 20 L3 20 Z" />
+        <path d="M12 9 L12 14" />
+        <circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none" />
+      </svg>
+      Redline
+    </div>
+    <div class="doc-meta">HARLOW-DIGITAL-STUDIO-AGREEMENT.TXT · SURVEYED JUST NOW</div>
+  </div>
+
+  <h1 class="briefing__label">Trailhead briefing</h1>
+  <p class="briefing__summary">
+    This is a flat-fee freelance web development agreement. It lets <strong>Harlow Digital Studio end the engagement at any time without paying for unaccepted work</strong>, claims <strong>your pre-existing tools and frameworks</strong> (not just what you build for them), holds you responsible for <strong>their legal costs with no cap</strong>, and restricts you from similar work for competitors <strong>anywhere in the country for five years</strong> after the engagement ends.
+  </p>
+
+  <div class="briefing__tally">
+    <div class="tally-item"><span class="tally-dot critical"></span><b>4</b>&nbsp;Critical</div>
+    <div class="tally-item"><span class="tally-dot moderate"></span><b>1</b>&nbsp;Moderate</div>
+    <div class="tally-item"><span class="tally-dot worth"></span><b>1</b>&nbsp;Worth noting</div>
+  </div>
+</header>
+
+<div class="workspace">
+  <main class="document-pane" id="doc-pane">
+
+    <h2>Freelance Web Development Agreement</h2>
+    <h3 class="doc-sub">Between Harlow Digital Studio ("Client") and the undersigned independent contractor ("Contractor")</h3>
+
+    <p><span class="clause-num">1.</span><strong>Scope of Work.</strong> Contractor will design, build, and deliver a responsive marketing website of up to twelve (12) pages, including all source files, on the timeline set out in Exhibit A.</p>
+
+    <p><span class="clause-num">2.</span><strong>Term and Termination.</strong> This Agreement begins on the Effective Date and continues until the Deliverables are accepted. <span class="zone critical" data-flag="termination" tabindex="0" role="button" aria-expanded="false" aria-controls="note-termination">Client may terminate this Agreement at any time, for any reason or no reason, upon written notice to Contractor, and Contractor shall have no right to cure and no entitlement to payment for Deliverables not yet formally accepted as of the termination date.</span></p>
+    <div class="field-note" id="note-termination" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+        <div><span class="field-note__label">Why flagged: Critical</span><span class="field-note__text">Client can end the engagement at will with no cure period, and you forfeit payment for anything not yet "formally accepted." Work you already delivered can go unpaid entirely at Client's discretion.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"Either party may terminate this Agreement upon fifteen (15) days' written notice. If Client terminates, Contractor shall be paid in full for all Deliverables completed or substantially completed as of the termination date, whether or not formally accepted."</span></div>
+      </div>
+    </div></div></div>
+
+    <p><span class="clause-num">3.</span><strong>Fees.</strong> Client shall pay Contractor a flat fee of $8,400, payable in three installments. <span class="zone moderate" data-flag="fees" tabindex="0" role="button" aria-expanded="false" aria-controls="note-fees">Any Change Order requested after the initial scope is fixed shall be billed at a rate set by Client in its sole discretion at the time of the request.</span></p>
+    <div class="field-note" id="note-fees" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--moderate)"><path d="M12 3 L21 12 L12 21 L3 12 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="16.5" r=".6" fill="currentColor" stroke="none"/></svg>
+        <div><span class="field-note__label">Why flagged: Moderate</span><span class="field-note__text">Client, not you, sets the rate for any work beyond the original scope: a recurring exposure every time the project grows.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"Change Orders shall be billed at Contractor's standard hourly rate of $125/hour, disclosed in Exhibit A, and require Contractor's written approval before work begins."</span></div>
+      </div>
+    </div></div></div>
+
+    <p><span class="clause-num">4.</span><strong>Intellectual Property.</strong> <span class="zone critical" data-flag="ip" tabindex="0" role="button" aria-expanded="false" aria-controls="note-ip">Contractor hereby assigns to Client, in perpetuity and throughout the universe, all right, title, and interest in and to any and all pre-existing tools, frameworks, code libraries, and design systems that Contractor uses, modifies, or incorporates in connection with the Deliverables.</span></p>
+    <div class="field-note" id="note-ip" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+        <div><span class="field-note__label">Why flagged: Critical</span><span class="field-note__text">This reaches beyond the site you're building them: it claims the reusable tools and frameworks you bring to every client. That's closer to losing a business asset than losing one deliverable.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"Contractor assigns to Client all right, title, and interest in the Deliverables created specifically for Client under this Agreement. Contractor's pre-existing tools, frameworks, code libraries, and design systems remain Contractor's property and are licensed to Client for use with the Deliverables."</span></div>
+      </div>
+    </div></div></div>
+
+    <p><span class="clause-num">5.</span><strong>Non-Competition.</strong> <span class="zone critical" data-flag="noncompete" tabindex="0" role="button" aria-expanded="false" aria-controls="note-noncompete">During the Term and for a period of five (5) years following termination of this Agreement, Contractor shall not, directly or indirectly, provide website design or development services to any business offering products or services similar to those of Client, anywhere in the United States.</span></p>
+    <div class="field-note" id="note-noncompete" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+        <div><span class="field-note__label">Why flagged: Critical</span><span class="field-note__text">Five years, nationwide, against any similar business: this restricts a meaningful share of your future paid work. Foregone income counts as financial exposure even though no money changes hands today.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"For a period of six (6) months following termination, Contractor shall not knowingly perform substantially similar website design services for a direct competitor of Client that Client identifies in writing at signing."</span></div>
+      </div>
+      <div class="jurisdiction-note">Enforceability of non-compete clauses varies significantly by state. Verify locally before relying on this restriction, or on this counter-offer, as legally binding.</div>
+    </div></div></div>
+
+    <p><span class="clause-num">6.</span><strong>Indemnification.</strong> <span class="zone critical" data-flag="indemnification" tabindex="0" role="button" aria-expanded="false" aria-controls="note-indemnification">Contractor shall indemnify, defend, and hold harmless Client from and against any and all claims, damages, losses, and expenses, including attorneys' fees, arising out of or relating to Contractor's performance of this Agreement, without regard to the amount of such claims, damages, losses, or expenses.</span></p>
+    <div class="field-note" id="note-indemnification" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+        <div><span class="field-note__label">Why flagged: Critical</span><span class="field-note__text">No cap. You could end up covering Client's legal costs in full, regardless of size, for anything connected to your work: the exact exposure that has left freelancers self-funding a client's legal defense.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"Contractor's indemnification obligations under this Section are limited to claims arising from Contractor's gross negligence or willful misconduct, and Contractor's total liability under this Agreement shall not exceed the total fees paid under this Agreement."</span></div>
+      </div>
+    </div></div></div>
+
+    <p><span class="clause-num">7.</span><strong>Confidentiality.</strong> Each party agrees to keep confidential any proprietary information disclosed by the other party during the Term.</p>
+
+    <p><span class="clause-num">8.</span><strong>Governing Law.</strong> This Agreement shall be governed by the laws of the State of Delaware.</p>
+
+    <p><span class="clause-num">9.</span><strong>Assignment.</strong> <span class="zone worth" data-flag="assignment" tabindex="0" role="button" aria-expanded="false" aria-controls="note-assignment">Client may assign this Agreement, in whole or in part, to any successor, acquirer, or affiliate without Contractor's prior consent.</span></p>
+    <div class="field-note" id="note-assignment" aria-hidden="true"><div class="field-note__inner"><div class="field-note__card">
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--worth)"><circle cx="12" cy="12" r="8.5"/></svg>
+        <div><span class="field-note__label">Why flagged: Worth noting</span><span class="field-note__text">You could end up working for, and owed by, a company you never agreed to. Low exposure on its own, but worth knowing before you sign.</span></div>
+      </div>
+      <div class="field-note__row">
+        <svg class="field-note__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17 L10 11 L14 15 L20 7"/></svg>
+        <div><span class="field-note__label">Counter-offer</span><span class="field-note__text">"Client may not assign this Agreement without Contractor's prior written consent, which shall not be unreasonably withheld."</span></div>
+      </div>
+    </div></div></div>
+
+  </main>
+
+  <aside class="rail">
+    <h3>Severity legend</h3>
+    <ul class="legend">
+      <li><svg class="legend__swatch" viewBox="0 0 24 24" fill="none" stroke="var(--hazard)" stroke-width="2.4"><path d="M12 2 L21 20 L3 20 Z"/></svg>Critical: direct or foregone-income exposure</li>
+      <li><svg class="legend__swatch" viewBox="0 0 24 24" fill="none" stroke="var(--moderate)" stroke-width="2.4"><path d="M12 3 L21 12 L12 21 L3 12 Z"/></svg>Moderate: real, lesser exposure</li>
+      <li><svg class="legend__swatch" viewBox="0 0 24 24" fill="none" stroke="var(--worth)" stroke-width="2.4"><circle cx="12" cy="12" r="8.5"/></svg>Worth noting: one-sided, not dangerous</li>
+    </ul>
+
+    <div class="youarehere" id="youarehere">You are here: <b id="youarehere-label">Clause 2, Termination</b></div>
+
+    <h3>Flags on this route</h3>
+    <ul class="rail-list" id="rail-list">
+      <li class="rail-item" data-target="termination">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="termination" aria-expanded="false" aria-controls="note-termination">
+          <svg class="rail-item__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/></svg>
+          <span><span class="rail-item__sev">Critical</span><span class="rail-item__label">Unilateral termination, no cure</span></span>
+        </button>
+      </li>
+      <li class="rail-item" data-target="fees">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="fees" aria-expanded="false" aria-controls="note-fees">
+          <svg class="rail-item__icon moderate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 L21 12 L12 21 L3 12 Z"/></svg>
+          <span><span class="rail-item__sev">Moderate</span><span class="rail-item__label">Change orders billed at Client's discretion</span></span>
+        </button>
+      </li>
+      <li class="rail-item" data-target="ip">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="ip" aria-expanded="false" aria-controls="note-ip">
+          <svg class="rail-item__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/></svg>
+          <span><span class="rail-item__sev">Critical</span><span class="rail-item__label">IP assignment reaches your own tools</span></span>
+        </button>
+      </li>
+      <li class="rail-item" data-target="noncompete">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="noncompete" aria-expanded="false" aria-controls="note-noncompete">
+          <svg class="rail-item__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/></svg>
+          <span><span class="rail-item__sev">Critical</span><span class="rail-item__label">5-year nationwide non-compete</span></span>
+        </button>
+      </li>
+      <li class="rail-item" data-target="indemnification">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="indemnification" aria-expanded="false" aria-controls="note-indemnification">
+          <svg class="rail-item__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 L21 20 L3 20 Z"/></svg>
+          <span><span class="rail-item__sev">Critical</span><span class="rail-item__label">Uncapped indemnification</span></span>
+        </button>
+      </li>
+      <li class="rail-item" data-target="assignment">
+        <span class="rail-marker"></span>
+        <button class="rail-item__btn" data-jump="assignment" aria-expanded="false" aria-controls="note-assignment">
+          <svg class="rail-item__icon worth" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/></svg>
+          <span><span class="rail-item__sev">Worth noting</span><span class="rail-item__label">Assignable without your consent</span></span>
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <footer>Redline — prototype workspace. Demo document and flags are synthetic, for design review only.</footer>
+</div>
+
+<script>
+(function(){
+  var labels = {
+    termination: "Clause 2, Termination",
+    fees: "Clause 3, Fees",
+    ip: "Clause 4, Intellectual Property",
+    noncompete: "Clause 5, Non-Competition",
+    indemnification: "Clause 6, Indemnification",
+    assignment: "Clause 9, Assignment"
+  };
+
+  var zones = Array.prototype.slice.call(document.querySelectorAll(".zone"));
+  var railItems = Array.prototype.slice.call(document.querySelectorAll(".rail-item"));
+  var youAreHereLabel = document.getElementById("youarehere-label");
+
+  function setActive(flag){
+    zones.forEach(function(z){ z.classList.toggle("active", z.dataset.flag === flag); });
+    railItems.forEach(function(r){ r.dataset.active = (r.dataset.target === flag) ? "true" : "false"; });
+    if (labels[flag]) youAreHereLabel.textContent = labels[flag];
+  }
+
+  function setTriggersExpanded(flag, expanded){
+    document.querySelectorAll('[aria-controls="note-' + flag + '"]').forEach(function(trigger){
+      trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
+    });
+  }
+
+  function toggleNote(flag){
+    var note = document.getElementById("note-" + flag);
+    var isOpen = note.classList.contains("open");
+    document.querySelectorAll(".field-note.open").forEach(function(n){
+      n.classList.remove("open");
+      n.setAttribute("aria-hidden", "true");
+      setTriggersExpanded(n.id.replace("note-", ""), false);
+    });
+    if (!isOpen){
+      note.classList.add("open");
+      note.setAttribute("aria-hidden", "false");
+      setTriggersExpanded(flag, true);
+    }
+  }
+
+  zones.forEach(function(z){
+    z.addEventListener("click", function(){
+      setActive(z.dataset.flag);
+      toggleNote(z.dataset.flag);
+    });
+    z.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " " || e.key === "Spacebar"){
+        e.preventDefault();
+        setActive(z.dataset.flag);
+        toggleNote(z.dataset.flag);
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-jump]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var flag = btn.dataset.jump;
+      var zone = document.querySelector('.zone[data-flag="' + flag + '"]');
+      if (zone){
+        zone.scrollIntoView({ behavior: "smooth", block: "center" });
+        setActive(flag);
+        var note = document.getElementById("note-" + flag);
+        if (!note.classList.contains("open")) toggleNote(flag);
+      }
+    });
+  });
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if (entry.isIntersecting){
+        setActive(entry.target.dataset.flag);
+      }
+    });
+  }, { root: null, rootMargin: "-40% 0px -50% 0px", threshold: 0 });
+
+  zones.forEach(function(z){ observer.observe(z); });
+
+  setActive("termination");
+})();
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ Contract / lease / freelance-agreement / ToS analyzer. Given an uploaded documen
 ## Stack (settled — do not reconsider)
 - Next.js, deployed on Vercel.
 - Supabase for auth and database.
+- For Supabase provisioning, auth, migrations, or deployment configuration, follow `docs/supabase-setup.md`: use the existing free staging project shared with Trippal, with separate Redline data and access rules. Keep Supabase on Free.
 - Model calls go through OpenRouter — never call a model provider directly.
 
 ## Non-negotiable invariants
@@ -34,7 +35,11 @@ Excluded on purpose, do not add without asking: payments/billing, OCR for scanne
 
 ### Issue tracker
 
-Issues live in GitHub Issues for this repo; uses the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues and specs live as markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line in each issue file. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

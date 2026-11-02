@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper: #F3EEE2;
+    --paper-deep: #EAE2D1;
+    --ink: #2A271F;
+    --ink-soft: #55503F;
+    --contour: #B9AF95;
+    --contour-strong: #8D836A;
+    --hazard: #B31B23;
+    --hazard-deep: #7F1219;
+    --moderate: #C97A3F;
+    --worth: #7C8451;
+    --rule: rgba(42,39,31,0.16);
+    --focus: #1C5C8A;
+    --body-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  .visually-hidden{
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html{
+    scrollbar-width: thin;
+    scrollbar-color: var(--contour-strong) var(--paper);
+  }
+  html::-webkit-scrollbar{ width: 10px; }
+  html::-webkit-scrollbar-track{ background: var(--paper); }
+  html::-webkit-scrollbar-thumb{ background-color: var(--contour-strong); border-radius: 5px; }
+
+  body{
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Overpass", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection{ background: var(--hazard); color: var(--paper); }
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 3px; }
+
+  .contour-ground{
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-color: var(--paper);
+    background-image:
+      repeating-radial-gradient( circle at 14% 12%, transparent 0, transparent 44px, var(--contour) 45px, transparent 46px, transparent 104px ),
+      repeating-radial-gradient( circle at 86% 74%, transparent 0, transparent 58px, var(--contour) 59px, transparent 60px, transparent 128px );
+    opacity: .3;
+  }
+
+  .shell{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 56px);
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+    padding: 26px 0 0;
+  }
+  .brand{
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em;
+  }
+  .brand svg{ width: 20px; height: 20px; flex: none; }
+  .masthead__note{
+    font-family: var(--mono);
+    font-size: .78rem; color: var(--ink-soft); letter-spacing: .01em;
+    min-width: 0;
+  }
+
+  /* ---------- hero: the legend is the hero ---------- */
+  .hero{ padding: 48px 0 12px; }
+  .hero h1{
+    font-size: clamp(2rem, 4.4vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    margin: 0 0 18px;
+    max-width: 20ch;
+    text-wrap: balance;
+  }
+  .hero__sub{
+    font-family: var(--body-font);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 34px;
+  }
+
+  .keyplate{
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: rgba(243,238,226,0.86);
+    overflow: hidden;
+  }
+  .keyplate__head{
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-deep);
+  }
+  .keyplate__title{
+    font-family: var(--mono);
+    font-size: .8rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: .12em;
+    color: var(--hazard-deep);
+    margin: 0;
+  }
+  .keyplate__count{
+    font-family: var(--mono);
+    font-size: .8rem; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .keyrow{
+    display: grid;
+    grid-template-columns: 26px minmax(0,1.1fr) 158px minmax(0,1.5fr);
+    align-items: center;
+    gap: 14px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .keyrow:last-child{ border-bottom: none; }
+  @media (max-width: 760px){
+    .keyrow{
+      grid-template-columns: 22px minmax(0,1fr);
+      grid-template-areas: "icon name" ". tier" ". cost";
+      gap: 4px 12px;
+      padding: 14px 16px;
+    }
+    .keyrow__icon{ grid-area: icon; }
+    .keyrow__name{ grid-area: name; }
+    .keyrow__tier{ grid-area: tier; margin-top: 4px; }
+    .keyrow__cost{ grid-area: cost; margin-top: 4px; }
+  }
+  .keyrow__icon{ width: 20px; height: 20px; }
+  .keyrow__icon.critical{ color: var(--hazard); }
+  .keyrow__icon.moderate{ color: var(--moderate); }
+  .keyrow__icon.worth{ color: var(--worth); }
+  .keyrow__name{
+    font-weight: 600;
+    font-size: .96rem;
+    letter-spacing: -0.005em;
+  }
+  .keyrow__tier{
+    font-family: var(--mono);
+    font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 7px;
+  }
+  .tierchip{
+    height: 6px; width: 34px; flex: none;
+    border-radius: 2px;
+    transform-origin: left center;
+    background: var(--contour);
+  }
+  .tierchip.critical{ background: var(--hazard); }
+  .tierchip.moderate{ background: var(--moderate); }
+  .tierchip.worth{ background: var(--worth); }
+  .keyrow__cost{
+    font-family: var(--body-font);
+    font-size: .96rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .tierchip{ animation: survey .5s cubic-bezier(.16,1,.3,1) backwards; }
+    .keyrow:nth-child(1) .tierchip{ animation-delay: .05s; }
+    .keyrow:nth-child(2) .tierchip{ animation-delay: .11s; }
+    .keyrow:nth-child(3) .tierchip{ animation-delay: .17s; }
+    .keyrow:nth-child(4) .tierchip{ animation-delay: .23s; }
+    .keyrow:nth-child(5) .tierchip{ animation-delay: .29s; }
+    .keyrow:nth-child(6) .tierchip{ animation-delay: .35s; }
+    .keyrow:nth-child(7) .tierchip{ animation-delay: .41s; }
+  }
+  @keyframes survey{
+    from{ transform: scaleX(0); }
+    to{ transform: scaleX(1); }
+  }
+
+  /* ---------- CTA ---------- */
+  .cta-block{
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+    padding: 30px 0 0;
+  }
+  .cta{
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: .9rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .14em;
+    color: var(--paper);
+    background: var(--hazard);
+    border: 2px solid var(--hazard-deep);
+    border-radius: 3px;
+    padding: 15px 26px;
+    text-decoration: none;
+    transition: background-color .16s ease, transform .16s ease;
+  }
+  .cta:hover{ background: var(--hazard-deep); }
+  .cta:active{ transform: translateY(1px); }
+  .cta svg{ width: 16px; height: 16px; }
+  .cta-block__note{
+    font-family: var(--body-font);
+    font-size: .96rem; color: var(--ink-soft);
+    max-width: 34ch;
+    line-height: 1.5;
+  }
+
+  /* ---------- section scaffolding ---------- */
+  section{ padding: 74px 0 0; }
+  .section-head{
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 12px; margin-bottom: 26px;
+  }
+  .section-head h2{
+    font-size: 1.32rem; font-weight: 700; letter-spacing: -0.015em;
+    margin: 0;
+  }
+  .section-head__meta{
+    font-family: var(--mono);
+    font-size: .78rem; color: var(--ink-soft);
+    margin-left: auto;
+  }
+  .lede{
+    font-family: var(--body-font);
+    font-size: 1.02rem; line-height: 1.65; color: var(--ink-soft);
+    max-width: 68ch;
+    margin: 0 0 26px;
+  }
+
+  /* ---------- evidence catalog ---------- */
+  .catalog{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @media (max-width: 900px){
+    .catalog{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 560px){
+    .catalog{ grid-template-columns: minmax(0,1fr); }
+  }
+  .entry{
+    background: var(--paper);
+    padding: 16px 16px 14px;
+    display: flex; flex-direction: column; gap: 9px;
+    min-width: 0;
+  }
+  .entry__fact{
+    font-family: var(--body-font);
+    font-size: .96rem; line-height: 1.5;
+    margin: 0;
+  }
+  .entry__meta{
+    margin-top: auto;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .entry__maps{
+    font-family: var(--mono);
+    font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .09em;
+    display: flex; align-items: center; gap: 7px;
+    color: var(--ink-soft);
+  }
+  .entry__maps .dot{ width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.critical{ background: var(--hazard); }
+  .dot.moderate{ background: var(--moderate); }
+  .dot.worth{ background: var(--worth); }
+  .dot.none{ background: var(--contour-strong); }
+  .entry__source{
+    font-family: var(--mono);
+    font-size: .72rem; color: var(--contour-strong);
+  }
+  .catalog-note{
+    font-family: var(--body-font);
+    font-size: .96rem; line-height: 1.6;
+    color: var(--ink);
+    background: var(--paper-deep);
+    border-radius: 4px;
+    padding: 15px 18px;
+    margin: 18px 0 0;
+    max-width: 72ch;
+  }
+
+  /* ---------- wayfinding chain ---------- */
+  .chain{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @media (max-width: 800px){
+    .chain{ grid-template-columns: minmax(0,1fr); }
+  }
+  .band{
+    background: var(--paper);
+    padding: 22px 20px 24px;
+    display: flex; flex-direction: column; gap: 11px;
+    min-width: 0;
+  }
+  .band__head{
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--hazard-deep);
+  }
+  .band__head svg{ width: 15px; height: 15px; flex: none; }
+  .band h3{
+    font-size: 1.05rem; font-weight: 700; margin: 0; letter-spacing: -0.01em;
+  }
+  .band p{
+    font-family: var(--body-font);
+    font-size: .96rem; line-height: 1.6; color: var(--ink-soft);
+    margin: 0;
+  }
+  .band__quote{
+    font-family: var(--body-font);
+    font-size: .86rem; line-height: 1.5;
+    background: rgba(179,27,35,0.10);
+    border-radius: 2px;
+    padding: 9px 11px;
+    color: var(--ink);
+  }
+
+  /* ---------- refusals ---------- */
+  .refusals{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+    gap: 22px 34px;
+    max-width: 960px;
+  }
+  .refusal h3{
+    font-size: .96rem; font-weight: 700; margin: 0 0 6px;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .refusal h3 svg{ width: 15px; height: 15px; flex: none; color: var(--contour-strong); }
+  .refusal p{
+    font-family: var(--body-font);
+    font-size: .96rem; line-height: 1.55; color: var(--ink-soft); margin: 0;
+  }
+
+  /* ---------- close ---------- */
+  .close{
+    margin: 76px 0 0;
+    border-top: 1px solid var(--rule);
+    padding: 44px 0 0;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 34px; flex-wrap: wrap;
+  }
+  .close h2{
+    font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 800;
+    letter-spacing: -0.02em; margin: 0 0 12px; max-width: 18ch;
+    text-wrap: balance;
+  }
+  .close p{
+    font-family: var(--body-font);
+    font-size: 1.02rem; line-height: 1.6; color: var(--ink-soft);
+    margin: 0; max-width: 46ch;
+  }
+
+  footer{
+    margin-top: 62px;
+    border-top: 1px solid var(--rule);
+    padding: 22px 0 46px;
+    font-family: var(--mono);
+    font-size: .78rem; color: var(--ink-soft);
+    display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+<div class="contour-ground" aria-hidden="true"></div>
+
+<div class="shell">
+
+  <header class="masthead">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2 L21 20 L3 20 Z" />
+        <path d="M12 9 L12 14" />
+        <circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none" />
+      </svg>
+      Redline
+    </div>
+    <div class="masthead__note">CONTRACT / LEASE / ToS SURVEY · FOR FREELANCERS</div>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-top:44px">
+      <h1>Every risk we flag quotes the sentence it came from.</h1>
+      <p class="hero__sub">Redline reads a contract you've been handed and marks the clauses that can cost you, ranked by what they cost. Each one points at the exact words that caused the flag, and each one carries counter-language drafted to send back. Here is the full key of what it checks for, before you give it anything.</p>
+
+      <div class="keyplate">
+        <div class="keyplate__head">
+          <h2 class="keyplate__title">The key: what Redline surveys for</h2>
+          <span class="keyplate__count">7 clause types · 3 severity tiers</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">Auto-renewal &amp; hard-to-cancel terms</span>
+          <span class="keyrow__tier"><i class="tierchip critical"></i>Critical</span>
+          <span class="keyrow__cost">Charges that keep landing after you believed you had cancelled.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">Unilateral termination &amp; deactivation</span>
+          <span class="keyrow__tier"><i class="tierchip critical"></i>Critical</span>
+          <span class="keyrow__cost">They end it with no cure period and no appeal; the income stops that day.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">Non-compete restrictions</span>
+          <span class="keyrow__tier"><i class="tierchip critical"></i>Critical</span>
+          <span class="keyrow__cost">Paid work you are barred from taking, for years after the job ends.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon critical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2 L21 20 L3 20 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">Indemnification without a cap</span>
+          <span class="keyrow__tier"><i class="tierchip critical"></i>Critical</span>
+          <span class="keyrow__cost">Their legal bills become yours, with no ceiling written anywhere.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon moderate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 L21 12 L12 21 L3 12 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="16.5" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">IP &amp; work-product assignment</span>
+          <span class="keyrow__tier"><i class="tierchip moderate"></i>Moderate<span class="visually-hidden"> to Critical</span></span>
+          <span class="keyrow__cost">Scales to Critical when it reaches the tools and frameworks you reuse on every job.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon moderate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 L21 12 L12 21 L3 12 Z"/><path d="M12 9 L12 14"/><circle cx="12" cy="16.5" r=".6" fill="currentColor" stroke="none"/></svg>
+          <span class="keyrow__name">Liability caps, or their absence</span>
+          <span class="keyrow__tier"><i class="tierchip moderate"></i>Moderate</span>
+          <span class="keyrow__cost">No stated ceiling on what one dispute can end up costing you.</span>
+        </div>
+
+        <div class="keyrow">
+          <svg class="keyrow__icon worth" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/></svg>
+          <span class="keyrow__name">Fee escalators</span>
+          <span class="keyrow__tier"><i class="tierchip worth"></i>Worth noting</span>
+          <span class="keyrow__cost">Rates and charges that are allowed to move after you have signed.</span>
+        </div>
+      </div>
+
+      <div class="cta-block">
+        <a class="cta" href="#start">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12 H19"/><path d="M13 6 L19 12 L13 18"/></svg>
+          Start your route
+        </a>
+        <p class="cta-block__note">Your file is read in your own browser. Only the extracted text is ever sent or stored, never the document itself.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Why these seven</h2>
+        <span class="section-head__meta">RESEARCH RECORD</span>
+      </div>
+      <p class="lede">Each clause type earned its place on the key from a documented case, not from a list of things that sound alarming. Where the evidence was thin, that is stated too.</p>
+
+      <div class="catalog">
+        <article class="entry">
+          <p class="entry__fact">A non-compete from a brief freelance engagement was pressed four years later, and creators turned down future work rather than test it.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot critical"></i>Non-compete</span>
+            <span class="entry__source">Illustrator's own published account</span>
+          </div>
+        </article>
+
+        <article class="entry">
+          <p class="entry__fact">A freelance journalist funded her own legal defense because the contract made her responsible for the client's exposure, not just her own work.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot critical"></i>Indemnification</span>
+            <span class="entry__source">Reported, Forbes contributor case</span>
+          </div>
+        </article>
+
+        <article class="entry">
+          <p class="entry__fact">A business debit card was charged for nine years, more than $2,500 in total, after the subscriber believed the account had been cancelled.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot critical"></i>Auto-renewal</span>
+            <span class="entry__source">FTC enforcement record</span>
+          </div>
+        </article>
+
+        <article class="entry">
+          <p class="entry__fact">Of 127 Texas gig workers surveyed, 40 had been deactivated at least once; nearly half of those were later cleared of what triggered it.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot critical"></i>Unilateral termination</span>
+            <span class="entry__source">Human Rights Watch, 2025</span>
+          </div>
+        </article>
+
+        <article class="entry">
+          <p class="entry__fact">A flat-fee contract review by an attorney averages $390–400, which is the honest alternative this is measured against.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot none"></i>Cost context</span>
+            <span class="entry__source">ContractsCounsel, 34 projects</span>
+          </div>
+        </article>
+
+        <article class="entry">
+          <p class="entry__fact">Liability caps and fee escalators have no documented dispute behind them, only law-firm explainers. They are checked anyway, and ranked lower because of it.</p>
+          <div class="entry__meta">
+            <span class="entry__maps"><i class="dot worth"></i>Stated weak evidence</span>
+            <span class="entry__source">Redline research, gap noted</span>
+          </div>
+        </article>
+      </div>
+
+      <p class="catalog-note">None of these are Redline customers, and none are presented as proof that Redline works. They are the record that decided what it looks for and how severely it ranks each find.</p>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>The route</h2>
+        <span class="section-head__meta">THREE DECISION POINTS</span>
+      </div>
+
+      <div class="chain">
+        <div class="band">
+          <div class="band__head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17 V5"/><path d="M7 10 L12 5 L17 10"/><path d="M4 20 H20"/></svg>
+            You are here
+          </div>
+          <h3>Upload it</h3>
+          <p>The file is parsed in your browser. Only the extracted text crosses to Redline; the document itself never leaves your machine.</p>
+        </div>
+
+        <div class="band">
+          <div class="band__head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 H18"/><path d="M13 7 L18 12 L13 17"/></svg>
+            Next stop
+          </div>
+          <h3>Check every flag against the text</h3>
+          <p>Each flag carries the exact sentence that caused it, ranked by financial exposure, which counts income a clause stops you earning, not only money it makes you pay.</p>
+          <p class="band__quote">Contractor shall not, directly or indirectly, provide services to any business similar to those of Client, anywhere in the United States.</p>
+        </div>
+
+        <div class="band">
+          <div class="band__head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 H18"/><path d="M13 7 L18 12 L13 17"/></svg>
+            Last stop
+          </div>
+          <h3>Counter with drafted language</h3>
+          <p>Every flagged clause comes with replacement wording that names the clause it answers, so the reply you send is specific rather than "can we revisit section 5."</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>What it will not do</h2>
+        <span class="section-head__meta">STATED LIMITS</span>
+      </div>
+      <p class="lede">A tool that claims everything is worth nothing to a skeptic. These are refusals, not a roadmap.</p>
+
+      <div class="refusals">
+        <div class="refusal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 18 L18 6"/></svg>Read scanned documents</h3>
+          <p>Optical character recognition misreads words. A quoted sentence taken from misread text is a citation to something the document does not say, which breaks the one guarantee this product makes.</p>
+        </div>
+        <div class="refusal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 18 L18 6"/></svg>Replace a lawyer</h3>
+          <p>This is built to beat signing unread and to beat a cheap one-off review. It is not built to carry a high-stakes negotiation on its own.</p>
+        </div>
+        <div class="refusal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 18 L18 6"/></svg>Ask where you live</h3>
+          <p>Enforceability of a non-compete swings by state. Redline names that on the flag and tells you to verify locally, rather than collecting your jurisdiction and guessing.</p>
+        </div>
+        <div class="refusal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M6 18 L18 6"/></svg>Keep your document</h3>
+          <p>The original file is never transmitted or stored. Your saved library holds the extracted text and the analysis, and only for your own account.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="close" id="start">
+      <div>
+        <h2>Read it before you sign it.</h2>
+        <p>Upload the agreement in front of you and get the key applied to its actual sentences.</p>
+      </div>
+      <a class="cta" href="#start">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12 H19"/><path d="M13 6 L19 12 L13 18"/></svg>
+        Start your route
+      </a>
+    </section>
+  </main>
+
+  <footer>
+    <span>REDLINE PROTOTYPE LANDING PAGE</span>
+    <span>DEMO SURFACE FOR DESIGN REVIEW · NOT A LIVE SERVICE</span>
+  </footer>
+
+</div>
+</body>
+</html>

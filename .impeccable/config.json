@@ -1,0 +1,28 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "prototypes/document-review.html",
+          "prototypes/landing-page.html"
+        ],
+        "createdAt": "2026-09-28T03:42:07.318Z",
+        "reason": "Impeccable direction contract (document-review brief, seed 1838a319): world is a literal paper topographic trail map; parchment ground is domain material truth, not a default reach, per new-work.md's brief-pinned-world exception"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "prototypes/document-review.html",
+          "prototypes/landing-page.html"
+        ],
+        "createdAt": "2026-09-28T03:42:07.637Z",
+        "reason": "Impeccable direction contract (document-review brief): CSS repeating-radial-gradient renders the topographic contour-ring texture named in OWN-WORLD, not decorative stripe filler"
+      }
+    ]
+  }
+}

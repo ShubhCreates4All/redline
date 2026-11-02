@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T00:00:00Z",
+  "title": "Design System: Redline",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Parchment", "canonical": "#F3EEE2", "tonalRamp": ["#2A2620", "#4A4438", "#6B6350", "#8D836A", "#B9AF95", "#D7CFB9", "#EAE2D1", "#F3EEE2"] },
+      "paper-deep": { "role": "neutral", "displayName": "Parchment Deep", "canonical": "#EAE2D1", "tonalRamp": ["#2A2620", "#4A4438", "#6B6350", "#8D836A", "#B9AF95", "#D2C9B4", "#E3DAC7", "#EAE2D1"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#2A271F", "tonalRamp": ["#1A1813", "#2A271F", "#403C30", "#55503F", "#726C57", "#948D73", "#B9AF95", "#DAD3C0"] },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Ink", "canonical": "#55503F", "tonalRamp": ["#2A271F", "#403C30", "#55503F", "#6B664F", "#847E65", "#9E9880", "#BAB49C", "#D8D3C0"] },
+      "contour": { "role": "neutral", "displayName": "Contour Line", "canonical": "#B9AF95", "tonalRamp": ["#4A4438", "#5F5847", "#756D57", "#8D836A", "#A69B80", "#B9AF95", "#D2C9B4", "#EAE2D1"] },
+      "contour-strong": { "role": "neutral", "displayName": "Contour Line Strong", "canonical": "#8D836A", "tonalRamp": ["#3A352A", "#4E4838", "#655D49", "#8D836A", "#A79C80", "#C1B79A", "#DBD2BA", "#EEE8D8"] },
+      "hazard": { "role": "primary", "displayName": "Hazard Red", "canonical": "#B31B23", "tonalRamp": ["#3D090C", "#5C0E13", "#7F1219", "#B31B23", "#CE4750", "#DF7B81", "#EDACB0", "#F8DDDE"] },
+      "hazard-deep": { "role": "primary", "displayName": "Hazard Red Deep", "canonical": "#7F1219", "tonalRamp": ["#2C0608", "#450A0D", "#5F0E12", "#7F1219", "#A11922", "#C34751", "#DE8189", "#F2C1C4"] },
+      "moderate": { "role": "secondary", "displayName": "Moderate Amber-Brown", "canonical": "#C97A3F", "tonalRamp": ["#4A2A12", "#6B3D1B", "#925327", "#C97A3F", "#D8996C", "#E5B896", "#F0D6C0", "#F9EEE3"] },
+      "worth": { "role": "secondary", "displayName": "Worth-Noting Olive", "canonical": "#7C8451", "tonalRamp": ["#2C2F1C", "#414627", "#5B6237", "#7C8451", "#98A06D", "#B5BB90", "#D2D6B6", "#EBEDDB"] },
+      "focus": { "role": "utility", "displayName": "Focus Blue", "canonical": "#1C5C8A", "tonalRamp": ["#0A2436", "#123C5B", "#184D75", "#1C5C8A", "#3A80B2", "#6DA4C9", "#A6C9DF", "#DCEBF4"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Section Heading", "purpose": "Document pane h2 headings only." },
+      "label": { "displayName": "Wayfinding Label", "purpose": "Tracked uppercase micro-labels: trailhead briefing, field-note row labels, rail severity words." },
+      "body": { "displayName": "Document Prose", "purpose": "All document text, quoted clauses, counter-offers, field-note explanations. Never Overpass." },
+      "mono": { "displayName": "Coordinate Data", "purpose": "Clause numbers, doc metadata, tallies, you-are-here readout." }
+    },
+    "shadows": [
+      { "name": "field-note-ambient", "value": "0 1px 0 rgba(42,39,31,0.05)", "purpose": "Near-invisible ambient hairline lifting the field-note card off the parchment-deep surface beneath it. The only shadow in the system." }
+    ],
+    "motion": [
+      { "name": "field-note-reveal", "value": "grid-template-rows 0.38s cubic-bezier(.16,1,.3,1)", "purpose": "Field-note expand/collapse; grid-rows technique avoids max-height guessing." },
+      { "name": "zone-hover", "value": "background-color 0.18s ease", "purpose": "Risk-zone tint deepening on hover/active." },
+      { "name": "rail-marker-track", "value": "opacity 0.15s ease, top 0.25s cubic-bezier(.16,1,.3,1)", "purpose": "You-are-here marker tracking the active rail entry." }
+    ],
+    "breakpoints": [
+      { "name": "stack", "value": "880px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Risk Zone (Critical)",
+      "kind": "custom",
+      "refersTo": "zone-critical",
+      "description": "Inline flat-tint highlight over a source sentence, keyboard-operable, expands its field note on activation.",
+      "html": "<span class=\"ds-zone ds-zone-critical\" tabindex=\"0\" role=\"button\" aria-expanded=\"false\">Client may terminate this Agreement at any time...</span>",
+      "css": ".ds-zone { padding: 0 0.08em; border-radius: 2px; cursor: pointer; transition: background-color 0.18s ease; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; } .ds-zone-critical { background: rgba(179,27,35,0.16); } .ds-zone-critical:hover, .ds-zone-critical:focus-visible { background: rgba(179,27,35,0.26); } .ds-zone-critical:focus-visible { outline: 2px solid #1C5C8A; outline-offset: 3px; }"
+    },
+    {
+      "name": "Field Note",
+      "kind": "card",
+      "refersTo": "field-note-card",
+      "description": "Expand/collapse detail card revealed by a risk zone: why-flagged plus counter-offer, shown one at a time.",
+      "html": "<div class=\"ds-field-note\"><div class=\"ds-field-note-row\"><span class=\"ds-field-note-label\">Why flagged: Critical</span><p class=\"ds-field-note-text\">Client can end the engagement at will with no cure period.</p></div><div class=\"ds-field-note-row\"><span class=\"ds-field-note-label\">Counter-offer</span><p class=\"ds-field-note-text\">Either party may terminate upon fifteen (15) days' written notice.</p></div></div>",
+      "css": ".ds-field-note { background: #EAE2D1; border-radius: 4px; padding: 18px 20px 20px; box-shadow: 0 1px 0 rgba(42,39,31,0.05); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; } .ds-field-note-row { margin-bottom: 12px; } .ds-field-note-row:last-child { margin-bottom: 0; } .ds-field-note-label { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #55503F; display: block; margin-bottom: 4px; } .ds-field-note-text { font-size: 0.96rem; line-height: 1.6; margin: 0; color: #2A271F; }"
+    },
+    {
+      "name": "Severity Legend",
+      "kind": "custom",
+      "refersTo": "legend",
+      "description": "Bordered legend list mapping severity tier to shape+color and plain description; shape (triangle/diamond/circle) is redundant with color.",
+      "html": "<ul class=\"ds-legend\"><li><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#B31B23\" stroke-width=\"2.4\" width=\"14\" height=\"14\"><path d=\"M12 2 L21 20 L3 20 Z\"/></svg>Critical: direct or foregone-income exposure</li><li><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#C97A3F\" stroke-width=\"2.4\" width=\"14\" height=\"14\"><path d=\"M12 3 L21 12 L12 21 L3 12 Z\"/></svg>Moderate: real, lesser exposure</li><li><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#7C8451\" stroke-width=\"2.4\" width=\"14\" height=\"14\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></svg>Worth noting: one-sided, not dangerous</li></ul>",
+      "css": ".ds-legend { list-style: none; margin: 0; padding: 0; border: 1px solid rgba(42,39,31,0.16); border-radius: 4px; overflow: hidden; } .ds-legend li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 0.82rem; color: #2A271F; border-bottom: 1px solid rgba(42,39,31,0.16); } .ds-legend li:last-child { border-bottom: none; }"
+    },
+    {
+      "name": "Rail Item Button",
+      "kind": "button",
+      "refersTo": "rail-item-btn",
+      "description": "Legend-style flag entry in the sticky rail; active state syncs with the you-are-here marker via IntersectionObserver.",
+      "html": "<button class=\"ds-rail-btn\" aria-expanded=\"false\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#B31B23\" stroke-width=\"2\"><path d=\"M12 2 L21 20 L3 20 Z\"/></svg><span><span class=\"ds-rail-sev\">Critical</span><span class=\"ds-rail-label\">Unilateral termination, no cure</span></span></button>",
+      "css": ".ds-rail-btn { width: 100%; text-align: left; display: flex; align-items: flex-start; gap: 10px; background: none; border: 1px solid transparent; border-radius: 4px; padding: 10px 10px 10px 14px; cursor: pointer; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; } .ds-rail-btn:hover { background: #EAE2D1; } .ds-rail-btn:focus-visible { outline: 2px solid #1C5C8A; outline-offset: 3px; } .ds-rail-sev { display: block; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #55503F; margin-bottom: 2px; } .ds-rail-label { font-size: 0.88rem; line-height: 1.35; color: #2A271F; }"
+    },
+    {
+      "name": "Trailhead Briefing Header",
+      "kind": "custom",
+      "refersTo": "briefing",
+      "description": "Page header: brand mark, doc metadata, mono micro-label over a real h1, system-ui summary, severity tally dots.",
+      "html": "<header class=\"ds-briefing\"><div class=\"ds-brand\">Redline</div><p class=\"ds-label\">Trailhead briefing</p><p class=\"ds-summary\">This is a flat-fee freelance web development agreement...</p><div class=\"ds-tally\"><span class=\"ds-dot\" style=\"background:#B31B23\"></span>4 Critical</div></header>",
+      "css": ".ds-briefing { border-bottom: 1px solid rgba(42,39,31,0.16); padding: 28px clamp(20px,4vw,56px) 22px; background: #F3EEE2; } .ds-brand { font-family: Overpass, system-ui, sans-serif; font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; color: #2A271F; } .ds-label { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em; color: #7F1219; margin: 18px 0 8px; } .ds-summary { max-width: 74ch; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; font-size: 1.12rem; line-height: 1.55; color: #2A271F; } .ds-tally { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.82rem; color: #55503F; } .ds-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Surveyed Document",
+    "overview": "Redline renders a legal document as terrain rather than as a list of chat-bot flags. Danger is a place you can point to, not a badge floating beside a paragraph: risk sits directly over the source sentence that caused it, shaded by severity the way a trail map shades a slope. Safe ground stays neutral ink on parchment; only the hazard-tint zones and the sparing hazard-red accent break the calm. The system is deliberately unglamorous where it needs to be legible — body prose, quoted clauses, and counter-offers run in a plain system-ui workhorse face so the words a user must trust are never stylized — and reserves the designed Overpass grotesque and JetBrains Mono for wayfinding scaffolding (headings, labels, legend, coordinates, tallies) that frames the document without competing with it. This is a light-only, code-shipped world (no dark mode this round; the parchment ground is treated as structural, not a theme option). It carries no drawn shadows as a device: the one shadow in the build is a 1px ambient hairline under the field-note card, not a hard offset or neobrutalist block shadow — this is not that kind of world.",
+    "keyCharacteristics": [
+      "Parchment ground with hairline ink-brown contour rules; one hazard red reserved for danger and the legend",
+      "Two-voice type system: a designed grotesque (Overpass) for wayfinding scaffolding, a plain system-ui stack for document prose and quoted legal text",
+      "Risk zones as flat graduated-opacity red tints laid directly over source sentences — a deliberate legibility adaptation, not a missing feature",
+      "Map-metaphor components: severity legend, \"you are here\" scroll marker, field-note expansion cards",
+      "Fully keyboard-operable risk zones with a synced ARIA expand/collapse pattern"
+    ],
+    "rules": [
+      { "name": "The One Hazard Rule", "body": "Hazard red is reserved for Critical severity and the brand mark only. Moderate and Worth-noting each carry their own distinct hue (amber-brown, olive) rather than a lighter tint of hazard red — severity tiers are colors apart, not intensities of one color, except within a single zone's own tint ramp.", "section": "colors" },
+      { "name": "The Focus-Is-Not-Severity Rule", "body": "Focus rings use --focus (#1C5C8A), a blue found nowhere else in the palette, so keyboard focus is never visually confused with a Moderate or Critical tint.", "section": "colors" },
+      { "name": "The Two-Voice Rule", "body": "Overpass is reserved for wayfinding scaffolding (brand, headings, tracked labels, legend chrome); system-ui carries every word the user must weigh and trust (document text, quotes, counter-offers). No document prose is ever set in Overpass, and no label/legend chrome is ever set in system-ui.", "section": "typography" },
+      { "name": "The Tonal-Not-Lifted Rule", "body": "Depth is conveyed by moving one step down the neutral ramp (parchment -> parchment-deep) plus a hairline rule, never by a drop shadow. The single ambient 1px shadow on the field-note card is the sole, deliberately minor exception.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set all document prose, quoted source sentences, and counter-offer text in the system-ui body stack — never in Overpass.",
+      "Do keep risk-zone shading as flat graduated-opacity red tint, not literal contour lines, inside quoted text — legibility of the source sentence wins that conflict by deliberate decision.",
+      "Do make every interactive risk zone keyboard-operable (tabindex, role=\"button\", Enter/Space) and pair every trigger with aria-expanded/aria-controls on its target field note.",
+      "Do reserve hazard red for the Critical tier and the brand mark; give Moderate and Worth-noting their own distinct hues rather than lighter tints of hazard red.",
+      "Do convey depth with a tonal step (parchment -> parchment-deep) plus a hairline rule; reserve the single ambient 1px shadow for the field-note card only."
+    ],
+    "donts": [
+      "Don't introduce a second shadow style, a hard offset shadow, or any neobrutalist block shadow — this world uses one near-invisible ambient hairline shadow and nothing else.",
+      "Don't use an icon font or a generic icon library glyph; icons in this build are hand-drawn inline SVG matched to the map metaphor (triangle/diamond/circle severity shapes, the trailhead brand mark).",
+      "Don't style body prose or quoted legal text in Overpass, and don't style labels, legend, or headings in the system-ui body stack — the two-voice split is load-bearing for the map/document distinction.",
+      "Don't use the --focus blue for anything but :focus-visible outlines; it exists specifically to stay distinct from every severity color."
+    ]
+  }
+}
